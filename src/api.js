@@ -50,7 +50,7 @@ function mockAnalysis() {
 }
 
 // ─── Public API ────────────────────────────────────────────────────────────────
-export async function analyzeFrameWithGemini(base64Image, _apiKey) {
+export async function analyzeFrame(base64Image) {
   if (!base64Image) throw new Error("No image frame captured")
   try {
     console.log("[CAT Lens] Calling local server → Groq Vision...")
@@ -63,7 +63,7 @@ export async function analyzeFrameWithGemini(base64Image, _apiKey) {
   }
 }
 
-export async function askGeminiSpatial(base64Image, question, _apiKey) {
+export async function askSpatial(base64Image, question) {
   try {
     const { text } = await post('/api/spatial', { image: base64Image, question })
     return text || "No response."
@@ -72,7 +72,7 @@ export async function askGeminiSpatial(base64Image, question, _apiKey) {
   }
 }
 
-export async function parseVoiceWithClaude(voiceText) {
+export async function parseVoice(voiceText) {
   try {
     return await post('/api/voice', { voiceText })
   } catch {
@@ -98,6 +98,8 @@ export function captureFrame(videoEl, quality = 0.6) {
   const canvas = document.createElement("canvas")
   canvas.width  = videoEl.videoWidth  || 1280
   canvas.height = videoEl.videoHeight || 720
-  canvas.getContext("2d").drawImage(videoEl, 0, 0)
+  const ctx = canvas.getContext("2d")
+  if (!ctx) throw new Error("Canvas 2D context unavailable")
+  ctx.drawImage(videoEl, 0, 0)
   return canvas.toDataURL("image/jpeg", quality).split(",")[1]
 }

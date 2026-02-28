@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Y, BORDER, PATHS, STATUS, Ic, Card, Btn, Pill, statusIconPath } from "./ui.jsx";
-import { analyzeFrameWithGemini, captureFrame } from "./api.js";
+import { analyzeFrame, captureFrame } from "./api.js";
 import CameraPanel from "./CameraPanel.jsx";
 import { CameraTab, DetectionTab, SpatialTab, VoiceTab, ChecklistTab, LogTab } from "./tabs.jsx";
 
@@ -145,7 +145,7 @@ export default function App() {
       const frame = captureFrame(video);
       setLastFrame(frame);
       setCapturedMedia({ type: "photo", src: `data:image/jpeg;base64,${frame}` });
-      const result = await analyzeFrameWithGemini(frame, "");
+      const result = await analyzeFrame(frame);
       const ts = new Date();
       if (result.components?.length > 0) {
         setComponents(result.components);
@@ -189,7 +189,7 @@ export default function App() {
       scanningRef.current = true;
       setScanning(true);
       try {
-        const result = await analyzeFrameWithGemini(frame, "");
+        const result = await analyzeFrame(frame);
         const ts = new Date();
         if (result.components?.length > 0) {
           setComponents(result.components);
@@ -294,7 +294,7 @@ export default function App() {
                  capturedMedia={capturedMedia} isRecording={isRecording}
                  onStartVideo={startVideoScan} onStopVideo={stopVideoScan} onResume={resumeCamera} />,
     detection: <DetectionTab components={components} onSelect={setSelected} scanning={scanning} onScan={scanFrame} cameraOn={cameraOn} />,
-    spatial:   <SpatialTab geminiKey="" lastFrame={lastFrame} components={components} />,
+    spatial:   <SpatialTab lastFrame={lastFrame} components={components} />,
     voice:     <VoiceTab voiceLog={voiceLog} setVoiceLog={setVoiceLog} />,
     checklist: <ChecklistTab components={components} voiceLog={voiceLog} />,
     log:       <LogTab scanLog={scanLog} onRestore={restoreLogEntry} />,

@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Y, BORDER, CARD, STATUS, PATHS, Ic, Card, Pill, Btn, Toggle, statusIconPath } from "./ui.jsx";
-import { askGeminiSpatial, parseVoiceWithClaude, generateRepairReport } from "./api.js";
+import { askSpatial, parseVoice, generateRepairReport } from "./api.js";
 
 // ─── CAMERA TAB ───────────────────────────────────────────────────────────────
 export function CameraTab({ cameraOn, scanning, autoScan, onStartCamera, onScan, onAutoScan,
@@ -188,7 +188,7 @@ export function DetectionTab({ components, onSelect, scanning, onScan, cameraOn 
 }
 
 // ─── SPATIAL TAB ──────────────────────────────────────────────────────────────
-export function SpatialTab({ geminiKey, lastFrame, components }) {
+export function SpatialTab({ lastFrame, components }) {
   const [query, setQuery] = useState("");
   const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
@@ -200,7 +200,7 @@ export function SpatialTab({ geminiKey, lastFrame, components }) {
     setLoading(true);
     setResponse("");
     try {
-      const result = await askGeminiSpatial(lastFrame, q, geminiKey);
+      const result = await askSpatial(lastFrame, q);
       setResponse(result);
       setHistory(h => [{ q, a: result, t: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }, ...h].slice(0, 5));
     } catch (e) {
@@ -323,7 +323,7 @@ export function VoiceTab({ voiceLog, setVoiceLog }) {
     cancelAutoSubmit();
     setLoading(true);
     try {
-      const parsed = await parseVoiceWithClaude(text);
+      const parsed = await parseVoice(text);
       if (parsed) {
         setLastResult(parsed);
         setVoiceLog(prev => [{
