@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0a0a0a;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #0d0d0d; }
+::-webkit-scrollbar-thumb { background: rgba(255, 205, 0, 0.25); border-radius: 2px; }
+
+/* CAT animations */
+@keyframes cat-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50%       { transform: scale(1.7); opacity: 0; }
+}
+@keyframes cat-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+@keyframes cat-fadein {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes cat-popin {
+  0%   { transform: translate(-50%, -50%) scale(0); }
+  80%  { transform: translate(-50%, -50%) scale(1.15); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes cat-wave {
+  from { transform: scaleY(0.25); }
+  to   { transform: scaleY(1); }
+}
+@keyframes cat-scanpulse {
+  0%, 100% { opacity: 0; }
+  50%       { opacity: 1; }
+}
+@keyframes cat-slide {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
