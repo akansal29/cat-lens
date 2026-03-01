@@ -185,6 +185,7 @@ export default function App() {
   });
   const [isRecording, setIsRecording]   = useState(false);
   const [serverOk, setServerOk]         = useState(null); // null=checking, true=ok, false=down
+  const [fieldMode, setFieldMode]       = useState(false);
 
   const videoRef        = useRef(null);
   const streamRef       = useRef(null);
@@ -382,9 +383,11 @@ export default function App() {
     }
   };
 
-  const critCount = components.filter(c => c.status === "critical").length;
-  const good      = components.filter(c => c.status === "good").length;
-  const warn      = components.filter(c => c.status === "warning").length;
+  const critCount   = components.filter(c => c.status === "critical").length;
+  const good        = components.filter(c => c.status === "good").length;
+  const warn        = components.filter(c => c.status === "warning").length;
+  const health      = components.length > 0 ? Math.round((good / components.length) * 100) : null;
+  const healthColor = health === null ? Y : health > 70 ? "#34c759" : health > 40 ? "#ff9500" : "#ff3b30";
 
   const tabContent = {
     camera:    <CameraTab cameraOn={cameraOn} scanning={scanning} autoScan={autoScan}
@@ -432,6 +435,13 @@ export default function App() {
           {scanError && <span style={{ fontSize: 12, color: "#ff3b30", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={scanError}>⚠ {scanError}</span>}
           {toast && <span style={{ fontSize: 12, color: "#34c759", animation: "cat-fadein 0.2s ease" }}>{toast}</span>}
           {critCount > 0 && <Pill color="#ff3b30">⚠ {critCount} Critical</Pill>}
+          <button onClick={() => setFieldMode(f => !f)} style={{
+            background: fieldMode ? Y : "transparent",
+            color: fieldMode ? "#000" : "#666",
+            border: `1px solid ${fieldMode ? Y : "#333"}`,
+            borderRadius: 6, fontSize: 11, padding: "4px 10px",
+            cursor: "pointer", fontWeight: 600,
+          }}>{fieldMode ? "✕ Exit Field Mode" : "⬜ Field Mode"}</button>
           <Pill color={serverOk === false ? "#ff3b30" : serverOk ? "#34c759" : "#888"}>
             {serverOk === false ? "⚠ Server Down" : serverOk ? "Groq Vision ✓" : "Connecting..."}
           </Pill>
@@ -444,8 +454,12 @@ export default function App() {
       {/* ── Main split ── */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
 
-        {/* Camera — 55% */}
-        <div style={{ width: "55%", flexShrink: 0, borderRight: `1px solid ${BORDER}` }}>
+        {/* Camera — expands to 100% in field mode */}
+        <div style={{
+          width: fieldMode ? "100%" : "55%", flexShrink: 0,
+          borderRight: fieldMode ? "none" : `1px solid ${BORDER}`,
+          transition: "width 0.3s ease", position: "relative",
+        }}>
           <CameraPanel
             videoRef={videoRef}
             components={components}
@@ -459,14 +473,49 @@ export default function App() {
             isRecording={isRecording}
             onResume={resumeCamera}
           />
+
+          {/* Field mode HUD */}
+          {fieldMode && (
+            <div style={{
+              position: "absolute", bottom: 24, left: 0, right: 0,
+              display: "flex", justifyContent: "center", alignItems: "center", gap: 12,
+              zIndex: 50,
+            }}>
+              {health !== null && (
+                <div style={{
+                  background: "rgba(0,0,0,0.82)", borderRadius: 20,
+                  padding: "8px 18px", color: healthColor,
+                  fontWeight: 900, fontSize: 20, fontFamily: "monospace",
+                  border: `1px solid ${healthColor}50`,
+                }}>{health}%</div>
+              )}
+              <button onClick={scanFrame} disabled={!cameraOn || scanning} style={{
+                background: scanning ? "rgba(255,205,0,0.15)" : Y,
+                color: scanning ? Y : "#000",
+                border: scanning ? `2px solid ${Y}` : "none",
+                borderRadius: 40, padding: "13px 32px",
+                fontSize: 15, fontWeight: 800,
+                cursor: scanning ? "not-allowed" : "pointer",
+                boxShadow: `0 0 28px ${Y}50`,
+                opacity: !cameraOn ? 0.4 : 1,
+              }}>{scanning ? "Analyzing..." : "📷 Scan"}</button>
+              {critCount > 0 && (
+                <div style={{
+                  background: "rgba(255,59,48,0.15)", border: "1px solid rgba(255,59,48,0.45)",
+                  borderRadius: 20, padding: "8px 16px",
+                  color: "#ff3b30", fontSize: 13, fontWeight: 700,
+                }}>⚠ {critCount} Critical</div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Panel — 45% */}
-        <div style={{ flex: 1, overflow: "hidden" }}>
+        {/* Panel — hidden in field mode */}
+        {!fieldMode && <div style={{ flex: 1, overflow: "hidden" }}>
           <div key={activeTab} style={{ height: "100%", animation: "cat-slide 0.2s ease" }}>
             {tabContent[activeTab]}
           </div>
-        </div>
+        </div>}
       </div>
 
       {/* ── Status bar ── */}

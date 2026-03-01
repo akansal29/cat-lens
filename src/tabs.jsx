@@ -645,17 +645,48 @@ export function ChecklistTab({ components, voiceLog }) {
 export function LogTab({ scanLog, onRestore }) {
   const [expanded, setExpanded] = useState(null);
 
+  const exportCSV = () => {
+    const rows = [["Scan Time", "Type", "Health %", "Summary", "Component", "Status", "Confidence %", "Details"]];
+    for (const entry of scanLog) {
+      const ts = entry.timestamp.toLocaleString();
+      if (entry.components.length === 0) {
+        rows.push([ts, entry.type, entry.health, entry.summary, "", "", "", ""]);
+      } else {
+        for (const c of entry.components) {
+          rows.push([ts, entry.type, entry.health, entry.summary,
+            c.name, c.status, Math.round(c.confidence * 100), c.details.replace(/"/g, "'")]);
+        }
+      }
+    }
+    const csv = rows.map(r => r.map(v => `"${v}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `cat-scan-log-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div style={{ padding: 14, overflowY: "auto", height: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
       <Card glow={Y}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-          <div style={{ width: 36, height: 36, background: Y, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <Ic path={PATHS.activity} size={18} color="#000" />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 36, height: 36, background: Y, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Ic path={PATHS.activity} size={18} color="#000" />
+            </div>
+            <div>
+              <div style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>Scan History</div>
+              <div style={{ color: "#666", fontSize: 11 }}>{scanLog.length} capture{scanLog.length !== 1 ? "s" : ""} stored · click any to restore</div>
+            </div>
           </div>
-          <div>
-            <div style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>Scan History</div>
-            <div style={{ color: "#666", fontSize: 11 }}>{scanLog.length} capture{scanLog.length !== 1 ? "s" : ""} stored · click any to restore</div>
-          </div>
+          {scanLog.length > 0 && (
+            <button onClick={exportCSV} style={{
+              background: "none", border: `1px solid ${Y}40`, borderRadius: 5,
+              color: Y, fontSize: 11, padding: "4px 10px", cursor: "pointer", fontWeight: 600,
+            }}>Export CSV</button>
+          )}
         </div>
       </Card>
 
