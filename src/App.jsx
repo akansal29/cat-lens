@@ -105,8 +105,15 @@ export default function App() {
   const [voiceLog, setVoiceLog]         = useState([]);
   const [toast, setToast]               = useState("");
   const [capturedMedia, setCapturedMedia] = useState(null); // { type: 'photo'|'video', src }
-  const [scanLog, setScanLog]           = useState([]);
+  const [scanLog, setScanLog]           = useState(() => {
+    try {
+      const saved = localStorage.getItem("cat-lens-scanlog");
+      if (!saved) return [];
+      return JSON.parse(saved).map(e => ({ ...e, timestamp: new Date(e.timestamp) }));
+    } catch { return []; }
+  });
   const [isRecording, setIsRecording]   = useState(false);
+  const [serverOk, setServerOk]         = useState(null); // null=checking, true=ok, false=down
 
   const videoRef        = useRef(null);
   const streamRef       = useRef(null);
@@ -234,14 +241,35 @@ export default function App() {
     setActiveTab("camera");
   }, []);
 
-  // ── Auto-scan timer ───────────────────────────────────────────────────────
+  // ── Auto-scan timer — pauses while camera is frozen on a capture ─────────
   useEffect(() => {
     clearInterval(autoScanRef.current);
-    if (autoScan && cameraOn) {
+    if (autoScan && cameraOn && !capturedMedia) {
       autoScanRef.current = setInterval(scanFrame, 8000);
     }
     return () => clearInterval(autoScanRef.current);
-  }, [autoScan, cameraOn, scanFrame]);
+  }, [autoScan, cameraOn, capturedMedia, scanFrame]);
+
+  // ── Persist scan log ─────────────────────────────────────────────────────
+  useEffect(() => {
+    try { localStorage.setItem("cat-lens-scanlog", JSON.stringify(scanLog)); } catch {}
+  }, [scanLog]);
+
+  // ── Server health check ───────────────────────────────────────────────────
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 2000);
+        const res = await fetch("http://localhost:3001/health", { signal: ctrl.signal });
+        clearTimeout(t);
+        setServerOk(res.ok);
+      } catch { setServerOk(false); }
+    };
+    check();
+    const interval = setInterval(check, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // ── Cleanup ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -333,7 +361,9 @@ export default function App() {
           {scanError && <span style={{ fontSize: 12, color: "#ff3b30", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={scanError}>⚠ {scanError}</span>}
           {toast && <span style={{ fontSize: 12, color: "#34c759", animation: "cat-fadein 0.2s ease" }}>{toast}</span>}
           {critCount > 0 && <Pill color="#ff3b30">⚠ {critCount} Critical</Pill>}
-          <Pill color={Y}>Groq Vision ✓</Pill>
+          <Pill color={serverOk === false ? "#ff3b30" : serverOk ? "#34c759" : "#888"}>
+            {serverOk === false ? "⚠ Server Down" : serverOk ? "Groq Vision ✓" : "Connecting..."}
+          </Pill>
         </div>
       </div>
 
