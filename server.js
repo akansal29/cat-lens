@@ -66,6 +66,7 @@ const server = http.createServer(async (req, res) => {
   cors(res)
 
   if (req.method === 'OPTIONS') { res.writeHead(200); res.end(); return }
+  if (req.method === 'GET' && req.url === '/health') { return json(res, { ok: true }) }
   if (req.method !== 'POST')    { res.writeHead(404); res.end(); return }
 
   let body = ''
@@ -77,13 +78,13 @@ const server = http.createServer(async (req, res) => {
       // ── Analyze frame ────────────────────────────────────────────────────
       if (req.url === '/api/analyze') {
         const { image } = payload
-        const raw = await callGroq([{
-          role: 'user',
-          content: [
+        const raw = await callGroq([
+          { role: 'system', content: VISION_SYSTEM },
+          { role: 'user', content: [
             { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${image}` } },
             { type: 'text', text: VISION_PROMPT },
-          ],
-        }])
+          ]},
+        ])
         const parsed = parseJSON(raw)
         if (!parsed.components) parsed.components = []
         console.log(`[CAT Lens] Analyzed frame: ${parsed.components.length} components`)

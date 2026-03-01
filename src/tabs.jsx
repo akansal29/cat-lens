@@ -133,7 +133,7 @@ export function DetectionTab({ components, onSelect, scanning, onScan, cameraOn 
           </div>
           <div>
             <div style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>Live Component Detection</div>
-            <div style={{ color: "#666", fontSize: 11 }}>Gemini 1.5 Flash Vision • Real positions</div>
+            <div style={{ color: "#666", fontSize: 11 }}>Groq Llama 4 Vision • Real positions</div>
           </div>
         </div>
         <Btn onClick={onScan} disabled={!cameraOn || scanning} style={{ width: "100%" }}>
@@ -186,7 +186,7 @@ export function DetectionTab({ components, onSelect, scanning, onScan, cameraOn 
                     </div>
                     <div style={{ color: "#666", fontSize: 11, marginTop: 3, lineHeight: 1.5 }}>{c.details}</div>
                     <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                      <Pill color={Y}>Gemini Vision</Pill>
+                      <Pill color={Y}>Groq Vision</Pill>
                       <Pill color={sc.color}>{sc.label}</Pill>
                     </div>
                   </div>
@@ -240,7 +240,7 @@ export function SpatialTab({ lastFrame, components }) {
           </div>
           <div>
             <div style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>Spatial Vision AI</div>
-            <div style={{ color: "#666", fontSize: 11 }}>Gemini answers from your actual camera frame</div>
+            <div style={{ color: "#666", fontSize: 11 }}>Groq answers from your actual camera frame</div>
           </div>
         </div>
         {!lastFrame && (
@@ -265,7 +265,7 @@ export function SpatialTab({ lastFrame, components }) {
                 }} />
               );
             })}
-            <div style={{ position: "absolute", bottom: 4, right: 8, fontSize: 9, color: "#333" }}>Live Gemini positions</div>
+            <div style={{ position: "absolute", bottom: 4, right: 8, fontSize: 9, color: "#333" }}>AI positions</div>
           </div>
         </Card>
       )}
@@ -276,7 +276,7 @@ export function SpatialTab({ lastFrame, components }) {
           value={query}
           onChange={e => setQuery(e.target.value)}
           onKeyDown={e => e.key === "Enter" && ask(query)}
-          placeholder="Ask about what Gemini sees..."
+          placeholder="Ask about what the AI sees..."
           style={{ flex: 1, background: "#111", border: `1px solid rgba(10,132,255,0.25)`, borderRadius: 8, padding: "9px 12px", color: "#fff", fontSize: 13, outline: "none" }}
         />
         <Btn onClick={() => ask(query)} disabled={loading || !query.trim()} variant="blue">
@@ -294,11 +294,11 @@ export function SpatialTab({ lastFrame, components }) {
         ))}
       </div>
 
-      {loading && <div style={{ textAlign: "center", color: "#888", fontSize: 13, padding: 10, animation: "cat-blink 0.9s infinite" }}>Gemini analyzing frame...</div>}
+      {loading && <div style={{ textAlign: "center", color: "#888", fontSize: 13, padding: 10, animation: "cat-blink 0.9s infinite" }}>Groq analyzing frame...</div>}
 
       {response && (
         <Card glow="#0a84ff" style={{ fontSize: 13, color: "#ddd", lineHeight: 1.7 }}>
-          <div style={{ fontSize: 10, color: "#0a84ff", fontWeight: 700, letterSpacing: 0.5, marginBottom: 6 }}>GEMINI SPATIAL ANALYSIS</div>
+          <div style={{ fontSize: 10, color: "#0a84ff", fontWeight: 700, letterSpacing: 0.5, marginBottom: 6 }}>GROQ SPATIAL ANALYSIS</div>
           {response}
         </Card>
       )}
@@ -458,12 +458,12 @@ export function VoiceTab({ voiceLog, setVoiceLog }) {
         </Btn>
       </div>
 
-      {loading && <div style={{ textAlign: "center", color: "#888", fontSize: 12 }}>Claude parsing command...</div>}
+      {loading && <div style={{ textAlign: "center", color: "#888", fontSize: 12 }}>Groq parsing command...</div>}
 
       {/* Last parse result */}
       {lastResult && (
         <Card glow="#34c759">
-          <div style={{ fontSize: 10, color: "#34c759", fontWeight: 700, letterSpacing: 0.5, marginBottom: 8 }}>✓ CLAUDE PARSED</div>
+          <div style={{ fontSize: 10, color: "#34c759", fontWeight: 700, letterSpacing: 0.5, marginBottom: 8 }}>✓ GROQ PARSED</div>
           {[["Location", lastResult.location], ["Observation", lastResult.observation], ["Status", lastResult.status], ["Action", lastResult.action], ["Follow-up", lastResult.followUp]].map(([k, v]) => v && (
             <div key={k} style={{ marginBottom: 4, fontSize: 12 }}>
               <span style={{ color: Y, fontWeight: 600 }}>{k}: </span>
@@ -504,14 +504,32 @@ export function VoiceTab({ voiceLog, setVoiceLog }) {
 export function ChecklistTab({ components, voiceLog }) {
   const [report, setReport] = useState("");
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const copyReport = () => {
+    navigator.clipboard.writeText(report).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const downloadReport = () => {
+    const blob = new Blob([report], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `cat-repair-report-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const items = [
     ...components.map(c => ({
-      component: c.name, status: c.status, method: "gemini-vision",
+      component: c.name, status: c.status, method: "groq-vision",
       time: "Live", details: c.details,
     })),
     ...voiceLog.map(v => ({
-      component: v.location, status: v.status, method: "voice-claude",
+      component: v.location, status: v.status, method: "voice-groq",
       time: v.time, details: v.observation,
     })),
   ];
@@ -539,7 +557,7 @@ export function ChecklistTab({ components, voiceLog }) {
           </div>
           <div>
             <div style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>Inspection Checklist</div>
-            <div style={{ color: "#666", fontSize: 11 }}>Auto-filled by Gemini Vision + Claude Voice</div>
+            <div style={{ color: "#666", fontSize: 11 }}>Auto-filled by Groq Vision + Groq Voice</div>
           </div>
         </div>
         <div style={{ height: 5, background: "#222", borderRadius: 3, overflow: "hidden" }}>
@@ -569,7 +587,7 @@ export function ChecklistTab({ components, voiceLog }) {
           <div style={{ fontSize: 10, color: "#555", fontWeight: 700, letterSpacing: 0.8 }}>ALL ITEMS</div>
           {items.map((item, i) => {
             const sc = STATUS[item.status] || STATUS.info;
-            const isVoice = item.method === "voice-claude";
+            const isVoice = item.method === "voice-groq";
             return (
               <Card key={i} style={{ animation: `cat-fadein 0.2s ease ${i * 0.03}s both` }}>
                 <div style={{ display: "flex", gap: 10 }}>
@@ -583,7 +601,7 @@ export function ChecklistTab({ components, voiceLog }) {
                     </div>
                     <div style={{ color: "#666", fontSize: 11, marginTop: 2 }}>{item.details}</div>
                     <div style={{ display: "flex", gap: 5, marginTop: 5 }}>
-                      <Pill color={isVoice ? "#34c759" : Y}>{isVoice ? "🎤 Claude Voice" : "📷 Gemini Vision"}</Pill>
+                      <Pill color={isVoice ? "#34c759" : Y}>{isVoice ? "🎤 Groq Voice" : "📷 Groq Vision"}</Pill>
                       <Pill color={sc.color}>{sc.label}</Pill>
                     </div>
                   </div>
@@ -600,9 +618,21 @@ export function ChecklistTab({ components, voiceLog }) {
       </Btn>
 
       {report && (
-        <Card glow={Y} style={{ fontSize: 12, color: "#ddd", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>
-          <div style={{ fontSize: 10, color: Y, fontWeight: 700, letterSpacing: 0.5, marginBottom: 8 }}>📋 CLAUDE-GENERATED REPAIR REPORT</div>
-          {report}
+        <Card glow={Y}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <div style={{ fontSize: 10, color: Y, fontWeight: 700, letterSpacing: 0.5 }}>📋 REPAIR REPORT</div>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button onClick={copyReport} style={{
+                background: "none", border: `1px solid ${Y}40`, borderRadius: 5,
+                color: copied ? "#34c759" : Y, fontSize: 11, padding: "3px 9px", cursor: "pointer",
+              }}>{copied ? "Copied!" : "Copy"}</button>
+              <button onClick={downloadReport} style={{
+                background: "none", border: `1px solid ${Y}40`, borderRadius: 5,
+                color: Y, fontSize: 11, padding: "3px 9px", cursor: "pointer",
+              }}>Download</button>
+            </div>
+          </div>
+          <div style={{ fontSize: 12, color: "#ddd", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{report}</div>
         </Card>
       )}
 
