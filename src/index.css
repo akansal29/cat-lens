@@ -45,3 +45,25 @@ html, body, #root {
   from { opacity: 0; transform: translateX(12px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+
+/* CAT diagonal stripe pattern */
+.cat-stripes {
+  background: repeating-linear-gradient(
+    45deg,
+    #FFCD00,
+    #FFCD00 10px,
+    #E6B800 10px,
+    #E6B800 20px
+  );
+}
+
+/* CAT hazard stripe pattern (black and yellow) */
+.cat-hazard-stripes {
+  background: repeating-linear-gradient(
+    45deg,
+    #FFCD00,
+    #FFCD00 15px,
+    #000000 15px,
+    #000000 30px
+  );
+}

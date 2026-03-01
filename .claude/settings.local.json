@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(robocopy:*)",
+      "Bash(powershell -Command \"Copy-Item -Path ''.'' -Destination ''..\\cat-lens-backup'' -Recurse -Force\")",
+      "Bash(dir:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

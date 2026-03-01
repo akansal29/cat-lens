@@ -111,8 +111,21 @@ export function CameraTab({ cameraOn, scanning, autoScan, onStartCamera, onScan,
 
 // ─── DETECTION TAB ────────────────────────────────────────────────────────────
 export function DetectionTab({ components, onSelect, scanning, onScan, cameraOn }) {
+  const health = components.length > 0 ? Math.round((components.filter(c => c.status === "good").length / components.length) * 100) : 0;
+
   return (
     <div style={{ padding: 14, overflowY: "auto", height: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
+      {/* Overview Card with Stripes */}
+      <div className="cat-stripes" style={{ borderRadius: 12, padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 48, height: 48, background: "#000", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Ic path={PATHS.list} size={22} color={Y} />
+        </div>
+        <div>
+          <div style={{ color: "#000", fontWeight: 900, fontSize: 18, lineHeight: 1.2 }}>Overview</div>
+          <div style={{ color: "#000", fontSize: 13, fontWeight: 600, opacity: 0.75 }}>System Health</div>
+        </div>
+      </div>
+
       <Card glow={Y}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
           <div style={{ width: 36, height: 36, background: Y, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>

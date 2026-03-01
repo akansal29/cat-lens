@@ -74,14 +74,19 @@ export function Btn({ children, onClick, disabled, variant = "primary", style = 
     transition: "all 0.15s", opacity: disabled ? 0.45 : 1, ...style,
   };
   const variants = {
-    primary: { background: Y,                              color: "#000" },
+    primary: { color: "#000" },
     ghost:   { background: "#1e1e1e",                      color: "#ccc",    border: `1px solid ${BORDER}` },
     danger:  { background: "rgba(255,59,48,0.12)",         color: "#ff3b30", border: "1px solid rgba(255,59,48,0.28)" },
     green:   { background: "rgba(52,199,89,0.12)",         color: "#34c759", border: "1px solid rgba(52,199,89,0.28)" },
     blue:    { background: "rgba(10,132,255,0.12)",        color: "#0a84ff", border: "1px solid rgba(10,132,255,0.28)" },
   };
   return (
-    <button onClick={onClick} disabled={disabled} style={{ ...base, ...variants[variant] }}>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={variant === "primary" ? "cat-stripes" : ""}
+      style={{ ...base, ...variants[variant] }}
+    >
       {children}
     </button>
   );

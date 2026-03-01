@@ -52,6 +52,27 @@ function ComponentModal({ comp, onClose, onAction }) {
   );
 }
 
+// ─── BULLDOZER ICON ───────────────────────────────────────────────────────────
+function Bulldozer({ direction }) {
+  return (
+    <svg width="24" height="20" viewBox="0 0 24 20" style={{ transform: `scaleX(${direction === 'right' ? 1 : -1})` }}>
+      {/* Tracks */}
+      <rect x="2" y="13" width="20" height="5" rx="1.5" fill="#000" />
+      {/* Main body */}
+      <rect x="4" y="7" width="14" height="8" rx="1" fill="#FFCD00" />
+      {/* Cabin */}
+      <rect x="8" y="3" width="8" height="6" rx="1" fill="#FFCD00" />
+      {/* Window */}
+      <rect x="10" y="4.5" width="4" height="3" rx="0.5" fill="#000" opacity="0.3" />
+      {/* Bucket/Blade */}
+      <path d="M 1 13 L 4 10 L 4 13 Z" fill="#333" />
+      {/* Details */}
+      <circle cx="6" cy="15.5" r="1.5" fill="#333" />
+      <circle cx="18" cy="15.5" r="1.5" fill="#333" />
+    </svg>
+  );
+}
+
 // ─── TAB BAR ──────────────────────────────────────────────────────────────────
 const TABS = [
   { id: "camera",    label: "Camera",    icon: PATHS.cam },
@@ -63,14 +84,64 @@ const TABS = [
 ];
 
 function TabBar({ active, onChange, critCount, logCount }) {
+  const activeIndex = TABS.findIndex(t => t.id === active);
+  const prevIndexRef = useRef(activeIndex);
+  const [bulldozerSide, setBulldozerSide] = useState('right'); // 'right' or 'left'
+
+  const slidePosition = (activeIndex / TABS.length) * 100;
+  const slideWidth = 100 / TABS.length;
+
+  // Determine direction and update bulldozer side
+  useEffect(() => {
+    const prevIdx = prevIndexRef.current;
+
+    if (activeIndex > prevIdx) {
+      // Moving right - bulldozer pushes from the right
+      setBulldozerSide('right');
+    } else if (activeIndex < prevIdx) {
+      // Moving left - bulldozer pushes from the left
+      setBulldozerSide('left');
+    }
+    // Update ref for next comparison
+    prevIndexRef.current = activeIndex;
+  }, [activeIndex]);
+
+  const isRight = bulldozerSide === 'right';
+
   return (
-    <div style={{ display: "flex", background: "#0f0f0f", borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
+    <div style={{ display: "flex", background: "#0f0f0f", borderBottom: `1px solid ${BORDER}`, flexShrink: 0, position: "relative" }}>
+      {/* Yellow sliding indicator */}
+      <div style={{
+        position: "absolute",
+        bottom: 0,
+        left: `${slidePosition}%`,
+        width: `${slideWidth}%`,
+        height: "3px",
+        background: Y,
+        transition: "left 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+        zIndex: 1,
+      }} />
+
+      {/* CAT bulldozer - switches sides based on direction */}
+      <div style={{
+        position: "absolute",
+        bottom: "4px",
+        left: isRight
+          ? `calc(${slidePosition}% + ${slideWidth}% - 4px)`  // Right side of bar
+          : `calc(${slidePosition}% + 4px)`,                   // Left side of bar
+        transform: isRight ? "translateX(-100%)" : "translateX(0%)",
+        transition: "left 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+        zIndex: 2,
+        filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))",
+      }}>
+        <Bulldozer direction={isRight ? 'right' : 'left'} />
+      </div>
+
       {TABS.map(t => (
         <button key={t.id} onClick={() => onChange(t.id)} style={{
           flex: 1, padding: "8px 2px",
           display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
           background: active === t.id ? `${Y}10` : "transparent",
-          borderBottom: `2px solid ${active === t.id ? Y : "transparent"}`,
           color: active === t.id ? Y : "#444",
           cursor: "pointer", border: "none", fontSize: 10, transition: "all 0.15s",
           position: "relative",
@@ -310,10 +381,10 @@ export default function App() {
         zIndex: 20, flexShrink: 0,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ background: Y, padding: "3px 8px", borderRadius: 4, fontWeight: 900, fontSize: 14, color: "#000", letterSpacing: 1 }}>CAT</div>
+          <div className="cat-stripes" style={{ padding: "8px 10px", borderRadius: 6, fontWeight: 900, fontSize: 14, color: "#000", letterSpacing: 1 }}>CAT</div>
           <div>
             <div style={{ color: "#fff", fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>CAT Lens</div>
-            <div style={{ color: "#444", fontSize: 10 }}>AI Vision · HackIllinois 2026</div>
+            <div style={{ color: "#444", fontSize: 10 }}>Vision-First Walkaround • HackIllinois 2026</div>
           </div>
         </div>
         <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
@@ -371,23 +442,33 @@ export default function App() {
       {/* ── Status bar ── */}
       <div style={{
         background: "#0f0f0f", borderTop: `1px solid ${BORDER}`,
-        padding: "5px 14px", display: "flex", justifyContent: "space-between",
+        padding: "6px 14px", display: "flex", justifyContent: "space-between",
         alignItems: "center", flexShrink: 0,
       }}>
-        <div style={{ display: "flex", gap: 14, fontSize: 11, color: "#444" }}>
-          <span>CAT 320 Excavator</span>
-          <span>Components: <span style={{ color: Y }}>{components.length}</span></span>
-          {components.length > 0 && (
-            <span>
-              <span style={{ color: "#34c759" }}>{good}G</span>{" · "}
-              <span style={{ color: "#ff9500" }}>{warn}W</span>{" · "}
-              <span style={{ color: "#ff3b30" }}>{critCount}C</span>
+        <div style={{ display: "flex", gap: 14, fontSize: 11, alignItems: "center" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: critCount > 0 ? "#ff3b30" : "#34c759" }} />
+            <span style={{ color: critCount > 0 ? "#ff3b30" : "#34c759", fontWeight: 600 }}>
+              {critCount > 0 ? "Critical issue detected" : "All Systems Operational"}
             </span>
+          </span>
+          <span style={{ color: "#666" }}>Model: <span style={{ color: "#ddd" }}>Excavator 320</span></span>
+          <span style={{ color: "#666" }}>Components: <span style={{ color: "#ddd" }}>{components.length}/8</span></span>
+          {components.length > 0 && (
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <Ic path={PATHS.wrench} size={12} color={Y} />
+              <Ic path={PATHS.wrench} size={12} color={Y} />
+            </div>
           )}
-          {scanLog.length > 0 && <span style={{ color: Y }}>{scanLog.length} scans logged</span>}
         </div>
-        <div style={{ fontSize: 10, color: "#333" }}>Groq · Llama 4 Vision · CAT Inspect</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 10, color: "#555" }}>Powered by Gemini 1.5 Pro Vision • CAT Inspect Integration</span>
+          <div className="cat-stripes" style={{ padding: "2px 7px", borderRadius: 3, fontWeight: 900, fontSize: 10, color: "#000", letterSpacing: 0.5 }}>CAT</div>
+        </div>
       </div>
+
+      {/* ── Hazard stripe trim ── */}
+      <div className="cat-hazard-stripes" style={{ height: 8, flexShrink: 0 }} />
 
       <ComponentModal comp={selected} onClose={() => setSelected(null)} onAction={handleComponentAction} />
     </div>
