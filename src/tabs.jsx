@@ -526,11 +526,12 @@ export function ChecklistTab({ components, voiceLog }) {
   const items = [
     ...components.map(c => ({
       component: c.name, status: c.status, method: "groq-vision",
-      time: "Live", details: c.details,
+      confidence: c.confidence, time: "Live", details: c.details,
     })),
     ...voiceLog.map(v => ({
       component: v.location, status: v.status, method: "voice-groq",
       time: v.time, details: v.observation,
+      action: v.action, followUp: v.followUp, rawCommand: v.rawCommand,
     })),
   ];
 

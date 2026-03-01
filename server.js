@@ -119,15 +119,61 @@ const server = http.createServer(async (req, res) => {
 
       // ── Repair report ────────────────────────────────────────────────────
       if (req.url === '/api/report') {
-        const { items } = payload
-        const summary = items.map(i => `${i.component}: ${i.status} (${i.method}) — ${i.details}`).join('\n')
-        const text = await callGroq([{
-          role: 'system',
-          content: 'You are a CAT equipment maintenance report generator. Write a repair order with three sections: IMMEDIATE ACTIONS, SCHEDULED MAINTENANCE, ALL CLEAR. Plain text only, numbered lists, no markdown.',
-        }, {
-          role: 'user',
-          content: `Generate repair report for CAT 320 Excavator:\n\n${summary}`,
-        }], 700)
+        const { items, machine = 'CAT 320 Excavator' } = payload
+
+        const critical = items.filter(i => i.status === 'critical')
+        const warnings = items.filter(i => i.status === 'warning')
+        const good     = items.filter(i => i.status === 'good')
+
+        const fmtItem = i => {
+          const src = i.method === 'voice-groq'
+            ? `Voice note @ ${i.time}`
+            : `Vision AI — ${Math.round((i.confidence || 0) * 100)}% confidence`
+          const lines = [`- ${i.component} [${src}]: ${i.details}`]
+          if (i.rawCommand)  lines.push(`  Field note: "${i.rawCommand}"`)
+          if (i.action)      lines.push(`  Tech action: ${i.action}`)
+          if (i.followUp)    lines.push(`  Follow-up: ${i.followUp}`)
+          return lines.join('\n')
+        }
+
+        const context = [
+          `MACHINE: ${machine}`,
+          `INSPECTION DATE: ${new Date().toLocaleString()}`,
+          `TOTALS: ${items.length} findings — ${critical.length} critical, ${warnings.length} warnings, ${good.length} good`,
+          '',
+          `CRITICAL FINDINGS (${critical.length}):`,
+          critical.length ? critical.map(fmtItem).join('\n') : '  None',
+          '',
+          `WARNINGS (${warnings.length}):`,
+          warnings.length ? warnings.map(fmtItem).join('\n') : '  None',
+          '',
+          `ALL CLEAR (${good.length}):`,
+          good.length ? good.map(i => `- ${i.component}: ${i.details}`).join('\n') : '  None',
+        ].join('\n')
+
+        const REPORT_SYSTEM = `You are a Caterpillar certified field service engineer generating an official CAT repair order. Write a professional service report with exactly these sections in order:
+
+INSPECTION SUMMARY
+CRITICAL — DO NOT OPERATE
+SCHEDULED MAINTENANCE
+ALL CLEAR
+FIELD OBSERVATIONS
+RECOMMENDED ACTION PLAN
+
+Rules:
+- Plain text only. No markdown, no asterisks, no dashes as bullets — use numbers or letters.
+- INSPECTION SUMMARY: one paragraph — machine, date, overall health verdict (SAFE TO OPERATE / HOLD FOR SERVICE / GROUND THIS MACHINE), and key stats.
+- CRITICAL — DO NOT OPERATE: list only critical items. Each entry: component name, specific finding, exact action required, urgency (e.g. "before next shift", "immediately").
+- SCHEDULED MAINTENANCE: list only warning items. Each entry: component name, finding, recommended service, timeframe (e.g. "within 50 operating hours", "at next 250-hour PM").
+- ALL CLEAR: brief numbered list of confirmed-good components.
+- FIELD OBSERVATIONS: include any voice-logged notes from the technician verbatim, with their parsed action and follow-up.
+- RECOMMENDED ACTION PLAN: numbered priority list — what to do first through last, with estimated timeframes and who should perform each action (operator vs certified technician).
+- End the report with a single line: OVERALL VERDICT: [SAFE TO OPERATE / HOLD FOR SERVICE / GROUND THIS MACHINE]`
+
+        const text = await callGroq([
+          { role: 'system', content: REPORT_SYSTEM },
+          { role: 'user',   content: `Generate inspection report:\n\n${context}` },
+        ], 1400)
         return json(res, { text })
       }
 
