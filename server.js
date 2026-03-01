@@ -51,8 +51,9 @@ function parseJSON(raw) {
 }
 
 function cors(res) {
+  // Allow requests from any origin (production and local)
   res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 }
 
@@ -107,12 +108,28 @@ const server = http.createServer(async (req, res) => {
       // ── Voice parse ──────────────────────────────────────────────────────
       if (req.url === '/api/voice') {
         const { voiceText } = payload
+        const VOICE_SYSTEM = `You are CAT Lens voice parser for heavy equipment inspection. Technicians speak observations about equipment condition. Your job: parse their words into structured inspection data.
+
+Return ONLY a JSON object. No markdown. No code fences. No explanation. Just JSON.
+
+Example input: "Hey CAT, secondary fuel filter seal looks worn, no leaks yet"
+Example output: {"location":"Secondary Fuel Filter","observation":"Seal shows wear but no active leaking","status":"warning","action":"Monitor for leaks, schedule seal replacement","followUp":"Re-inspect at next service"}
+
+Rules:
+- location: Extract the specific component name mentioned (e.g. "Hydraulic Cylinder", "Track Tensioner", "Fuel Filter")
+- observation: Rephrase their observation professionally but keep the key details
+- status: Classify as "good" (no issues), "warning" (wear/early signs), or "critical" (immediate safety concern, leaks, breaks)
+- action: What should be logged or done about this finding
+- followUp: Any reminder about when to re-check or next steps (can be empty string if not needed)
+
+If they don't mention a specific component, use "Equipment" as location.`
+
         const raw = await callGroq([{
           role: 'system',
-          content: 'You are CAT Lens voice parser for equipment inspection. Return ONLY JSON, no markdown: {"location":"component name","observation":"what they saw","status":"good|warning|critical","action":"what to log","followUp":"any reminder"}',
+          content: VOICE_SYSTEM,
         }, {
           role: 'user',
-          content: `Parse this inspection note: "${voiceText}"`,
+          content: `Parse this technician's inspection note: "${voiceText}"`,
         }], 400)
         return json(res, parseJSON(raw))
       }
@@ -185,9 +202,9 @@ Rules:
   })
 })
 
-const PORT = 3001
-server.listen(PORT, () => {
-  console.log(`\n🔧 CAT Lens API server running on http://localhost:${PORT}`)
-  if (!GROQ_KEY) console.warn('⚠  GROQ_API_KEY not set in .env — get a free key at console.groq.com')
+const PORT = process.env.PORT || 3001
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n🔧 CAT Lens API server running on port ${PORT}`)
+  if (!GROQ_KEY) console.warn('⚠  GROQ_API_KEY not set — get a free key at console.groq.com')
   else console.log('✓  Groq API key loaded')
 })

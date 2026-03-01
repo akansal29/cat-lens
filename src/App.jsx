@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Y, BORDER, PATHS, STATUS, Ic, Card, Btn, Pill, statusIconPath } from "./ui.jsx";
+import { Y, BORDER, CARD, PATHS, STATUS, Ic, Card, Btn, Pill, statusIconPath } from "./ui.jsx";
 import { analyzeFrame, captureFrame } from "./api.js";
 import CameraPanel from "./CameraPanel.jsx";
 import { CameraTab, DetectionTab, SpatialTab, VoiceTab, ChecklistTab, LogTab } from "./tabs.jsx";
@@ -54,21 +54,24 @@ function ComponentModal({ comp, onClose, onAction }) {
 
 // ─── BULLDOZER ICON ───────────────────────────────────────────────────────────
 function Bulldozer({ direction }) {
+  // Flip the direction logic - when moving right, face left (pushing from behind)
+  const flipDirection = direction === 'left' ? 1 : -1;
+
   return (
-    <svg width="24" height="20" viewBox="0 0 24 20" style={{ transform: `scaleX(${direction === 'right' ? 1 : -1})` }}>
-      {/* Tracks */}
-      <rect x="2" y="13" width="20" height="5" rx="1.5" fill="#000" />
-      {/* Main body */}
-      <rect x="4" y="7" width="14" height="8" rx="1" fill="#FFCD00" />
-      {/* Cabin */}
-      <rect x="8" y="3" width="8" height="6" rx="1" fill="#FFCD00" />
+    <svg width="24" height="20" viewBox="0 0 24 20" style={{ transform: `scaleX(${flipDirection})` }}>
+      {/* Tracks with outline */}
+      <rect x="2" y="13" width="20" height="5" rx="1.5" fill="#000" stroke="#999" strokeWidth="0.5" />
+      {/* Main body with outline */}
+      <rect x="4" y="7" width="14" height="8" rx="1" fill="#FFCD00" stroke="#aaa" strokeWidth="0.8" />
+      {/* Cabin with outline */}
+      <rect x="8" y="3" width="8" height="6" rx="1" fill="#FFCD00" stroke="#aaa" strokeWidth="0.8" />
       {/* Window */}
       <rect x="10" y="4.5" width="4" height="3" rx="0.5" fill="#000" opacity="0.3" />
-      {/* Bucket/Blade */}
-      <path d="M 1 13 L 4 10 L 4 13 Z" fill="#333" />
-      {/* Details */}
-      <circle cx="6" cy="15.5" r="1.5" fill="#333" />
-      <circle cx="18" cy="15.5" r="1.5" fill="#333" />
+      {/* Bucket/Blade with outline */}
+      <path d="M 1 13 L 4 10 L 4 13 Z" fill="#333" stroke="#777" strokeWidth="0.5" />
+      {/* Details - wheels */}
+      <circle cx="6" cy="15.5" r="1.5" fill="#333" stroke="#666" strokeWidth="0.3" />
+      <circle cx="18" cy="15.5" r="1.5" fill="#333" stroke="#666" strokeWidth="0.3" />
     </svg>
   );
 }
@@ -160,8 +163,105 @@ function TabBar({ active, onChange, critCount, logCount }) {
   );
 }
 
+// ─── LANDING PAGE ─────────────────────────────────────────────────────────────
+function LandingPage({ onEnter }) {
+  return (
+    <div style={{ width: "100vw", height: "100vh", background: "#0a0a0a", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      {/* Header */}
+      <div style={{
+        background: "#0f0f0f", borderBottom: `1px solid ${BORDER}`,
+        padding: "12px 20px", display: "flex", alignItems: "center", gap: 12,
+        zIndex: 20, flexShrink: 0,
+      }}>
+        <div className="cat-stripes" style={{ padding: "10px 12px", borderRadius: 8, fontWeight: 900, fontSize: 16, color: "#000", letterSpacing: 1.2 }}>CAT</div>
+        <div>
+          <div style={{ color: "#fff", fontWeight: 700, fontSize: 16, lineHeight: 1.2 }}>CAT Lens</div>
+          <div style={{ color: "#444", fontSize: 11 }}>Vision-First Walkaround Inspection System</div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", padding: "60px 20px 40px", position: "relative", overflow: "auto" }}>
+
+        {/* Hero section with button */}
+        <div style={{ textAlign: "center", animation: "cat-fadein 0.6s ease" }}>
+          <div style={{ fontSize: 48, fontWeight: 900, color: "#fff", marginBottom: 12, letterSpacing: 1 }}>
+            Welcome to <span style={{ color: Y }}>CAT Lens</span>
+          </div>
+          <div style={{ fontSize: 18, color: "#888", marginBottom: 40, maxWidth: 600, margin: "0 auto 40px" }}>
+            AI-powered equipment inspection for the next generation of heavy machinery maintenance
+          </div>
+
+          {/* Enter App Button */}
+          <button onClick={onEnter} style={{
+            background: Y,
+            color: "#000",
+            border: "none",
+            borderRadius: 12,
+            padding: "18px 48px",
+            fontSize: 18,
+            fontWeight: 800,
+            cursor: "pointer",
+            boxShadow: `0 0 40px ${Y}40`,
+            transition: "all 0.3s",
+            letterSpacing: 1,
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = "scale(1.05)";
+            e.currentTarget.style.boxShadow = `0 0 60px ${Y}60`;
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.boxShadow = `0 0 40px ${Y}40`;
+          }}>
+            Launch CAT Lens 🚜
+          </button>
+        </div>
+
+        {/* Description and How to Use */}
+        <div style={{ maxWidth: 1000, width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, animation: "cat-fadein 0.8s ease 0.2s both" }}>
+
+          {/* About */}
+          <Card glow={Y}>
+            <div style={{ fontSize: 12, color: Y, fontWeight: 700, letterSpacing: 1, marginBottom: 12 }}>WHAT IS CAT LENS?</div>
+            <div style={{ color: "#ddd", fontSize: 14, lineHeight: 1.7, marginBottom: 12 }}>
+              CAT Lens revolutionizes equipment walkaround inspections with AI-powered computer vision. Point your camera at heavy machinery and get instant, intelligent analysis of component health, wear patterns, and maintenance needs.
+            </div>
+            <div style={{ color: "#888", fontSize: 13, lineHeight: 1.6 }}>
+              Built for field technicians who need hands-free operation, real-time diagnostics, and seamless integration with CAT service systems. Powered by Groq Vision AI and designed for the toughest jobsites.
+            </div>
+          </Card>
+
+          {/* How to Use */}
+          <Card glow="#0a84ff">
+            <div style={{ fontSize: 12, color: "#0a84ff", fontWeight: 700, letterSpacing: 1, marginBottom: 12 }}>HOW TO USE</div>
+            {[
+              { icon: "📷", title: "Start Camera", desc: "Grant camera access and point at equipment" },
+              { icon: "🔍", title: "Scan Components", desc: "Photo or video mode — AI analyzes in seconds" },
+              { icon: "🎤", title: "Voice Notes", desc: "Hands-free logging with voice commands" },
+              { icon: "📋", title: "Generate Reports", desc: "Export repair orders and inspection logs" },
+            ].map(({ icon, title, desc }) => (
+              <div key={title} style={{ display: "flex", gap: 10, marginBottom: 10, alignItems: "flex-start" }}>
+                <span style={{ fontSize: 20 }}>{icon}</span>
+                <div>
+                  <div style={{ color: "#ddd", fontSize: 13, fontWeight: 600 }}>{title}</div>
+                  <div style={{ color: "#666", fontSize: 12 }}>{desc}</div>
+                </div>
+              </div>
+            ))}
+          </Card>
+        </div>
+      </div>
+
+      {/* Hazard stripe footer */}
+      <div className="cat-hazard-stripes" style={{ height: 12, flexShrink: 0 }} />
+    </div>
+  );
+}
+
 // ─── APP ROOT ─────────────────────────────────────────────────────────────────
 export default function App() {
+  const [showLanding, setShowLanding] = useState(true);
 
   const [activeTab, setActiveTab]       = useState("camera");
   const [components, setComponents]     = useState([]);
@@ -401,6 +501,11 @@ export default function App() {
     checklist: <ChecklistTab components={components} voiceLog={voiceLog} />,
     log:       <LogTab scanLog={scanLog} onRestore={restoreLogEntry} />,
   };
+
+  // Show landing page first
+  if (showLanding) {
+    return <LandingPage onEnter={() => setShowLanding(false)} />;
+  }
 
   return (
     <div style={{ width: "100vw", height: "100vh", background: "#0a0a0a", display: "flex", flexDirection: "column", overflow: "hidden" }}>

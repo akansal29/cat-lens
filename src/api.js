@@ -1,7 +1,8 @@
 // ─── CAT Lens Vision API ───────────────────────────────────────────────────────
-// Calls our local API server (server.js on port 3001) → Groq vision AI
+// Calls our API server (local or deployed) → Groq vision AI
 
-const SERVER = 'http://localhost:3001'
+// Use production URL if available, otherwise localhost
+const SERVER = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 async function post(endpoint, body) {
   const res = await fetch(`${SERVER}${endpoint}`, {
